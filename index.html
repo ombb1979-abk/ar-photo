@@ -1,98 +1,83 @@
 <!DOCTYPE html>
 <html>
-  <head>
+<head>
     <meta name="viewport" content="width=device-width, initial-scale=1" />
     <meta name="apple-mobile-web-app-capable" content="yes">
-    <title>FocusLab Premium AR | 3x4 Vertical</title>
+    <title>FocusLab AR Debug</title>
     
-    <script src="https://cdn.jsdelivr.net/npm/mind-ar@1.2.2/dist/mindar-image-webxr.prod.js"></script>
-    <script src="https://aframe.io/releases/1.2.0/aframe.min.js"></script>
+    <script src="https://aframe.io/releases/1.4.2/aframe.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/mind-ar@1.2.2/dist/mindar-image-aframe.prod.js"></script>
     
     <style>
-      body { margin: 0; overflow: hidden; background-color: black; }
-      
-      /* Заставка для клиента (UI) */
-      #ui-overlay {
-        position: absolute; width: 100%; height: 100%; top: 0; left: 0;
-        background: rgba(0,0,0,0.7); display: flex; flex-direction: column;
-        justify-content: center; align-items: center; z-index: 10;
-        color: white; font-family: 'Segoe UI', sans-serif; text-align: center;
-      }
-      #ui-overlay.hidden { display: none; }
-      
-      .btn-start {
-        padding: 15px 30px; background: #e63946; color: white;
-        border: none; border-radius: 50px; font-size: 1.2rem;
-        cursor: pointer; margin-top: 20px; box-shadow: 0 4px 15px rgba(0,0,0,0.3);
-      }
-      
-      /* Скрываем само видео-окно, оно нужно только как источник для AR */
-      #arVideo { display: none; }
+        body { margin: 0; overflow: hidden; background: #000; }
+        #overlay {
+            position: absolute; z-index: 1000; top: 0; left: 0; width: 100%; height: 100%;
+            background: rgba(0,0,0,0.8); color: white; display: flex; 
+            flex-direction: column; justify-content: center; align-items: center;
+            text-align: center; font-family: sans-serif;
+        }
+        #debug-log {
+            position: absolute; bottom: 10px; left: 10px; z-index: 2000;
+            color: #0f0; font-size: 10px; background: rgba(0,0,0,0.5); pointer-events: none;
+        }
+        button {
+            padding: 15px 30px; background: #e63946; border: none; 
+            border-radius: 30px; color: white; font-size: 18px; cursor: pointer;
+        }
+        .hidden { display: none !important; }
     </style>
-  </head>
-  
-  <body>
-    <div id="ui-overlay">
-      <h2 style="margin:0;">FocusLab</h2>
-      <p style="opacity: 0.8;">Наведите камеру на фото</p>
-      <button class="btn-start" onclick="startExperience()">СМОТРЕТЬ СО ЗВУКОМ</button>
+</head>
+<body>
+
+    <div id="debug-log">Log: system ready...</div>
+
+    <div id="overlay">
+        <h2>FocusLab AR</h2>
+        <p>Нажмите кнопку для активации</p>
+        <button onclick="startAR()">ЗАПУСТИТЬ</button>
     </div>
 
-    <video id="arVideo" src="./video-1.mp4" preload="auto" loop="true" crossorigin="anonymous" muted playsinline webkit-playsinline></video>
-    
-    <a-scene mindar-image="imageTargetSrc: ./targets.mind; filterMinCF: 0.0001; filterBeta: 0.001; uiScanning: no;" 
-             color-space="sRGB" renderer="colorManagement: true, physicallyCorrectLights" 
+    <video id="arVideo" src="video-1.mp4" preload="auto" loop="true" crossorigin="anonymous" muted playsinline></video>
+
+    <a-scene mindar-image="imageTargetSrc: targets.mind; uiScanning: yes; filterMinCF:0.0001; filterBeta: 0.001;" 
+             embedded color-space="sRGB" renderer="colorManagement: true, physicallyCorrectLights" 
              vr-mode-ui="enabled: false" device-orientation-permission-ui="enabled: false">
-      
-      <a-assets>
-        </a-assets>
+        
+        <a-camera position="0 0 0" look-controls="enabled: false"></a-camera>
 
-      <a-camera position="0 0 0" look-controls="enabled: false"></a-camera>
-
-      <a-entity mindar-image-target="targetIndex: 0" id="target">
-        <a-video id="videoScreen" src="#arVideo" 
-                 width="1" height="1.333" 
-                 position="0 0 0" rotation="0 0 0"
-                 opacity="0"
-                 animation="property: opacity; to: 1; dur: 1000; startEvents: targetFound"
-                 animation__hide="property: opacity; to: 0; dur: 500; startEvents: targetLost">
-        </a-video>
-      </a-entity>
+        <a-entity mindar-image-target="targetIndex: 0" id="target">
+            <a-video src="#arVideo" width="1" height="1.333" position="0 0 0"></a-video>
+        </a-entity>
     </a-scene>
 
     <script>
-      const video = document.getElementById('arVideo');
-      const overlay = document.getElementById('ui-overlay');
-      const targetEntity = document.getElementById('target');
-      const videoScreen = document.getElementById('videoScreen');
-
-      // Функция запуска звука по нажатию кнопки
-      function startExperience() {
-        video.muted = false;
-        video.play().then(() => {
-          overlay.classList.add('hidden');
-        }).catch(err => {
-          console.log("Ждем касания для звука...");
-          overlay.innerHTML = "<h3>Нажмите еще раз для активации</h3>";
+        const log = document.getElementById('debug-log');
+        const video = document.getElementById('arVideo');
+        
+        // Ловим ошибки и выводим на экран
+        window.addEventListener('error', (e) => {
+            log.innerHTML += '<br>Error: ' + e.message;
         });
-      }
 
-      // События: когда фото найдено и когда потеряно
-      targetEntity.addEventListener("targetFound", event => {
-        console.log("Фото найдено");
-        videoScreen.emit('targetFound'); // Запуск анимации появления
-      });
+        function startAR() {
+            log.innerHTML += '<br>Starting video...';
+            video.muted = false;
+            video.play().then(() => {
+                document.getElementById('overlay').classList.add('hidden');
+                log.innerHTML += '<br>Video playing!';
+            }).catch(err => {
+                log.innerHTML += '<br>Play error: ' + err.name;
+            });
+        }
 
-      targetEntity.addEventListener("targetLost", event => {
-        console.log("Фото потеряно");
-        videoScreen.emit('targetLost'); // Запуск анимации исчезновения
-      });
-
-      // Автозапуск "немым" для Андроидов
-      window.onload = () => {
-        video.play().catch(() => {});
-      };
+        // Следим за состоянием системы MindAR
+        document.querySelector('a-scene').addEventListener('arReady', () => {
+            log.innerHTML += '<br>AR System Ready';
+        });
+        
+        document.querySelector('a-scene').addEventListener('arError', (event) => {
+            log.innerHTML += '<br>AR Error: ' + event.detail;
+        });
     </script>
-  </body>
+</body>
 </html>
