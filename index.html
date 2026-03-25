@@ -1,5 +1,48 @@
 <!DOCTYPE html>
 <html>
+  <head>
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <title>FocusLab AR Minimal</title>
+    
+    <script src="https://aframe.io/releases/1.4.2/aframe.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/mind-ar@1.2.2/dist/mindar-image-aframe.prod.js"></script>
+    
+    <style>
+      body { margin: 0; overflow: hidden; }
+      /* Инструкция поверх камеры */
+      #instruction {
+        position: absolute; top: 10px; left: 10px; z-index: 100;
+        color: white; background: rgba(0,0,0,0.5); padding: 10px; font-family: sans-serif;
+      }
+    </style>
+  </head>
+  
+  <body>
+    <div id="instruction">Наведите на фото. Тапните для звука.</div>
+
+    <video id="arVideo" src="video-1.mp4" preload="auto" loop="true" crossorigin="anonymous" muted playsinline webkit-playsinline></video>
+    
+    <a-scene mindar-image="imageTargetSrc: targets.mind;" color-space="sRGB" renderer="colorManagement: true, physicallyCorrectLights" vr-mode-ui="enabled: false" device-orientation-permission-ui="enabled: false">
+      
+      <a-camera position="0 0 0" look-controls="enabled: false"></a-camera>
+
+      <a-entity mindar-image-target="targetIndex: 0">
+        <a-video src="#arVideo" width="1" height="1.333" position="0 0 0"></a-video>
+      </a-entity>
+    </a-scene>
+
+    <script>
+      // Единственный скрипт: включить звук и запустить видео по клику
+      document.body.addEventListener('click', () => {
+        const video = document.querySelector('#arVideo');
+        video.muted = false;
+        video.play();
+      });
+    </script>
+  </body>
+</html><!DOCTYPE html>
+<html>
 <head>
     <meta name="viewport" content="width=device-width, initial-scale=1" />
     <meta name="apple-mobile-web-app-capable" content="yes">
