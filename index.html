@@ -1,15 +1,38 @@
+<!DOCTYPE html>
 <html>
   <head>
     <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <title>FocusLab AR Experience</title>
     <script src="https://cdn.jsdelivr.net/npm/mind-ar@1.2.2/dist/mindar-image-webxr.prod.js"></script>
     <script src="https://aframe.io/releases/1.2.0/aframe.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/mind-ar@1.2.2/dist/mindar-image-aframe.prod.js"></script>
+    
+    <style>
+      body { margin: 0; overflow: hidden; background-color: black; }
+      /* Скрываем всё, пока AR загружается */
+      #ui-overlay {
+        position: absolute; width: 100%; height: 100%; top: 0; left: 0;
+        background: rgba(0,0,0,0.8); display: flex; flex-direction: column;
+        justify-content: center; align-items: center; z-index: 10;
+        color: white; font-family: sans-serif; text-align: center; cursor: pointer;
+      }
+      #ui-overlay.hidden { display: none; }
+      #arVideo { display: none; } /* Видео скрыто, играет только как текстура */
+    </style>
   </head>
+  
   <body>
+    <div id="ui-overlay" onclick="startExperience()">
+      <h1>FocusLab</h1>
+      <p>Наведи камеру на фото<br>и нажми на экран для звука</p>
+    </div>
+
+    <video id="arVideo" src="./video-1.mp4" preload="auto" loop="true" crossorigin="anonymous" muted playsinline webkit-playsinline></video>
+    
     <a-scene mindar-image="imageTargetSrc: ./targets.mind;" color-space="sRGB" renderer="colorManagement: true, physicallyCorrectLights" vr-mode-ui="enabled: false" device-orientation-permission-ui="enabled: false">
       <a-assets>
-        <video id="arVideo" src="./video-1.mp4" preload="auto" loop="true" crossorigin="anonymous"></video>
-      </a-assets>
+        </a-assets>
 
       <a-camera position="0 0 0" look-controls="enabled: false"></a-camera>
 
@@ -19,11 +42,26 @@
     </a-scene>
 
     <script>
-      // Скрипт, чтобы видео начинало играть при клике (защита браузеров)
-      document.body.addEventListener('click', () => {
-        const video = document.querySelector('#arVideo');
-        video.play();
-      });
+      // Функция для запуска видео со звуком по клику
+      function startExperience() {
+        const video = document.getElementById('arVideo');
+        const overlay = document.getElementById('ui-overlay');
+        
+        // Размутируем видео
+        video.muted = false;
+        video.play().then(() => {
+          overlay.classList.add('hidden'); // Скрываем оверлей, если видео пошло
+        }).catch((error) => {
+          console.error("Ошибка автозапуска:", error);
+          overlay.innerHTML = "<h1>Ошибка</h1><p>Пожалуйста, перезагрузите страницу или коснитесь экрана</p>";
+        });
+      }
+      
+      // На всякий случай: запускаем видео "немым" сразу, чтобы "бесшовный переход" работал лучше
+      window.onload = () => {
+        const video = document.getElementById('arVideo');
+        video.play().catch(() => {}); // Игнорируем ошибку, если iPhone заблокировал
+      };
     </script>
   </body>
 </html>
