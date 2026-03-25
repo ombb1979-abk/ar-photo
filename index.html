@@ -1,50 +1,33 @@
 <!DOCTYPE html>
 <html>
 <head>
-    <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no">
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
     <meta name="apple-mobile-web-app-capable" content="yes">
     <script src="https://aframe.io/releases/1.4.2/aframe.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/mind-ar@1.2.2/dist/mindar-image-aframe.prod.js"></script>
     <style>
         body { margin: 0; overflow: hidden; }
-        /* Скрываем само видео от глаз браузера */
         #arVideo { display: none; }
-        #overlay {
-            position: absolute; top: 0; left: 0; width: 100%; height: 100%;
-            background: rgba(0,0,0,0.5); z-index: 10;
-            display: flex; justify-content: center; align-items: center;
-        }
-        button { padding: 20px; font-size: 20px; cursor: pointer; }
-        .hidden { display: none; }
+        #btn { position: absolute; z-index: 99; top: 50%; left: 50%; transform: translate(-50%,-50%); padding: 20px; font-size: 20px; }
     </style>
 </head>
 <body>
-    <div id="overlay">
-        <button onclick="start()">ЗАПУСТИТЬ</button>
-    </div>
-
+    <button id="btn" onclick="run()">НАЖМИ И НАВЕДИ</button>
+    
     <video id="arVideo" src="video-1.mp4" preload="auto" loop="true" crossorigin="anonymous" muted playsinline></video>
 
-    <a-scene mindar-image="imageTargetSrc: targets.mind; autoStart: false; uiScanning: no;" 
-             embedded color-space="sRGB" renderer="colorManagement: true, physicallyCorrectLights" 
-             vr-mode-ui="enabled: false" device-orientation-permission-ui="enabled: false">
-        
+    <a-scene mindar-image="imageTargetSrc: targets.mind; autoStart: false; uiScanning: no;" embedded vr-mode-ui="enabled: false" device-orientation-permission-ui="enabled: false">
         <a-camera position="0 0 0" look-controls="enabled: false"></a-camera>
-
         <a-entity mindar-image-target="targetIndex: 0">
-            <a-video src="#arVideo" width="1" height="1.333" position="0 0 0"></a-video>
+            <a-video src="#arVideo" width="1" height="1.333"></a-video>
         </a-entity>
     </a-scene>
 
     <script>
-        function start() {
-            const video = document.getElementById('arVideo');
-            const sceneEl = document.querySelector('a-scene');
-            const overlay = document.getElementById('overlay');
-            
-            video.play(); // Запуск видео в памяти
-            sceneEl.systems['mindar-image-system'].start(); // Запуск камеры
-            overlay.classList.add('hidden');
+        function run() {
+            document.getElementById('btn').style.display = 'none';
+            document.getElementById('arVideo').play();
+            document.querySelector('a-scene').systems['mindar-image-system'].start();
         }
     </script>
 </body>
