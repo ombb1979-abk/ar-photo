@@ -3,80 +3,66 @@
 <head>
     <meta name="viewport" content="width=device-width, initial-scale=1" />
     <meta name="apple-mobile-web-app-capable" content="yes">
-    <title>FocusLab AR Debug</title>
+    <title>FocusLab AR Fixed</title>
     
-    <script src="https://aframe.io/releases/1.4.2/aframe.min.js"></script>
+    <script src="https://aframe.io/releases/1.3.0/aframe.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/mind-ar@1.2.2/dist/mindar-image-aframe.prod.js"></script>
     
     <style>
         body { margin: 0; overflow: hidden; background: #000; }
-        #overlay {
+        #ui-overlay {
             position: absolute; z-index: 1000; top: 0; left: 0; width: 100%; height: 100%;
-            background: rgba(0,0,0,0.8); color: white; display: flex; 
-            flex-direction: column; justify-content: center; align-items: center;
-            text-align: center; font-family: sans-serif;
-        }
-        #debug-log {
-            position: absolute; bottom: 10px; left: 10px; z-index: 2000;
-            color: #0f0; font-size: 10px; background: rgba(0,0,0,0.5); pointer-events: none;
+            display: flex; justify-content: center; align-items: center;
+            background: rgba(0,0,0,0.8); color: white; font-family: sans-serif;
         }
         button {
-            padding: 15px 30px; background: #e63946; border: none; 
-            border-radius: 30px; color: white; font-size: 18px; cursor: pointer;
+            padding: 20px 40px; font-size: 18px; border-radius: 50px; border: none; background: #e63946; color: white; cursor: pointer;
         }
         .hidden { display: none !important; }
     </style>
 </head>
 <body>
 
-    <div id="debug-log">Log: system ready...</div>
-
-    <div id="overlay">
-        <h2>FocusLab AR</h2>
-        <p>Нажмите кнопку для активации</p>
-        <button onclick="startAR()">ЗАПУСТИТЬ</button>
+    <div id="ui-overlay">
+        <button onclick="startApp()">ЗАПУСТИТЬ МАГИЮ</button>
     </div>
 
-    <video id="arVideo" src="video-1.mp4" preload="auto" loop="true" crossorigin="anonymous" muted playsinline></video>
+    <video id="arVideo" src="video-1.mp4" preload="auto" loop="true" crossorigin="anonymous" muted playsinline style="display:none;"></video>
 
-    <a-scene mindar-image="imageTargetSrc: targets.mind; uiScanning: yes; filterMinCF:0.0001; filterBeta: 0.001;" 
+    <a-scene mindar-image="imageTargetSrc: targets.mind; autoStart: false; uiLoading: no; uiError: no; uiScanning: no;" 
              embedded color-space="sRGB" renderer="colorManagement: true, physicallyCorrectLights" 
              vr-mode-ui="enabled: false" device-orientation-permission-ui="enabled: false">
         
         <a-camera position="0 0 0" look-controls="enabled: false"></a-camera>
 
-        <a-entity mindar-image-target="targetIndex: 0" id="target">
-            <a-video src="#arVideo" width="1" height="1.333" position="0 0 0"></a-video>
+        <a-entity mindar-image-target="targetIndex: 0" id="targetEntity">
+            <a-video id="arVideoScene" src="#arVideo" width="1" height="1.333" position="0 0 0" visible="false"></a-video>
         </a-entity>
     </a-scene>
 
     <script>
-        const log = document.getElementById('debug-log');
+        const sceneEl = document.querySelector('a-scene');
         const video = document.getElementById('arVideo');
-        
-        // Ловим ошибки и выводим на экран
-        window.addEventListener('error', (e) => {
-            log.innerHTML += '<br>Error: ' + e.message;
-        });
+        const videoScene = document.getElementById('arVideoScene');
+        const targetEntity = document.getElementById('targetEntity');
+        const overlay = document.getElementById('ui-overlay');
 
-        function startAR() {
-            log.innerHTML += '<br>Starting video...';
-            video.muted = false;
-            video.play().then(() => {
-                document.getElementById('overlay').classList.add('hidden');
-                log.innerHTML += '<br>Video playing!';
-            }).catch(err => {
-                log.innerHTML += '<br>Play error: ' + err.name;
-            });
+        // 1. Запуск системы по кнопке
+        function startApp() {
+            video.play(); // Запускаем видео "в фоне" (оно скрыто)
+            sceneEl.systems['mindar-image-system'].start(); // Запускаем камеру и AR
+            overlay.classList.add('hidden');
         }
 
-        // Следим за состоянием системы MindAR
-        document.querySelector('a-scene').addEventListener('arReady', () => {
-            log.innerHTML += '<br>AR System Ready';
+        // 2. Логика появления видео ТОЛЬКО на маркере
+        targetEntity.addEventListener("targetFound", event => {
+            video.muted = false; // Включаем звук
+            videoScene.setAttribute('visible', true); // Делаем видео видимым в 3D
         });
-        
-        document.querySelector('a-scene').addEventListener('arError', (event) => {
-            log.innerHTML += '<br>AR Error: ' + event.detail;
+
+        targetEntity.addEventListener("targetLost", event => {
+            video.muted = true; // Выключаем звук, когда фото потеряно
+            videoScene.setAttribute('visible', false); // Скрываем видео
         });
     </script>
 </body>
